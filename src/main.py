@@ -3,10 +3,7 @@ import argparse
 import asyncio
 import os
 from typing import List
-
-from amiga_package import ops
-
-# import internal libs
+from enum import Enum
 
 # Must come before kivy imports
 os.environ["KIVY_NO_ARGS"] = "1"
@@ -26,14 +23,23 @@ from kivy.app import App  # noqa: E402
 from kivy.lang.builder import Builder  # noqa: E402
 
 
-class TemplateApp(App):
+# start/stop button
+class ACTION_BUTTON_STATE(Enum):
+    NORMAL = "normal"
+    DOWN = "down"
+
+
+class ACTION_BUTTON_TEXT(Enum):
+    START = "START"
+    STOP = "STOP"
+
+
+class VirtualJoystickApp(App):
     """Base class for the main Kivy app."""
 
     def __init__(self) -> None:
         super().__init__()
-
-        self.counter: int = 0
-
+        self.hidden_button: bool = False
         self.async_tasks: List[asyncio.Task] = []
 
     def build(self):
@@ -42,6 +48,14 @@ class TemplateApp(App):
     def on_exit_btn(self) -> None:
         """Kills the running kivy application."""
         App.get_running_app().stop()
+
+    def on_action_button(self, action_button):
+        if action_button.state == ACTION_BUTTON_STATE.NORMAL.value:
+            action_button.text = ACTION_BUTTON_TEXT.START.value
+            self.hidden_button = False
+        else:
+            action_button.text = ACTION_BUTTON_TEXT.STOP.value
+            self.hidden_button = True
 
     async def app_func(self):
         async def run_wrapper() -> None:
@@ -62,17 +76,14 @@ class TemplateApp(App):
             await asyncio.sleep(0.01)
 
         while True:
-            await asyncio.sleep(1.0)
+            await asyncio.sleep(0.5)
 
             # increment the counter using internal libs and update the gui
-            self.counter = ops.add(self.counter, 1)
-            self.root.ids.counter_label.text = (
-                f"{'Tic' if self.counter % 2 == 0 else 'Tac'}: {self.counter}"
-            )
+            self.root.ids.disable_button.disabled = self.hidden_button
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(prog="template-app")
+    parser = argparse.ArgumentParser(prog="joystick-tutorial")
 
     # Add additional command line arguments here
 
@@ -80,7 +91,7 @@ if __name__ == "__main__":
 
     loop = asyncio.get_event_loop()
     try:
-        loop.run_until_complete(TemplateApp().app_func())
+        loop.run_until_complete(VirtualJoystickApp().app_func())
     except asyncio.CancelledError:
         pass
     loop.close()
