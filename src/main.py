@@ -45,8 +45,11 @@ class ACTION_BUTTON_TEXT(Enum):
 class VirtualJoystickApp(App):
     """Base class for the main Kivy app."""
 
-    def __init__(self) -> None:
+    def __init__(self, address: str, canbus_port: int) -> None:
         super().__init__()
+        self.address: str = address
+        self.canbus_port: int = canbus_port
+
         self.hidden_button: bool = False
         self.async_tasks: List[asyncio.Task] = []
         self.max_speed: float = 0.1
@@ -75,6 +78,12 @@ class VirtualJoystickApp(App):
             for task in self.async_tasks:
                 task.cancel()
 
+        # configure the canbus client
+        canbus_config: ClientConfig = ClientConfig(
+            address=self.address, port=self.canbus_port
+        )
+        canbus_client: CanbusClient = CanbusClient(canbus_config)
+
         # Placeholder task
         self.async_tasks.append(asyncio.ensure_future(self.template_function()))
 
@@ -97,13 +106,21 @@ class VirtualJoystickApp(App):
 # when no message turn LED Red to indicate off state.
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="joystick-tutorial")
-
+    parser.add_argument(
+        "--address", type=str, default="localhost", help="The server address"
+    )
+    parser.add_argument(
+        "--canbus-port",
+        type=int,
+        required=True,
+        help="The grpc port where the canbus service is running.",
+    )
     # Add additional command line arguments here
     args = parser.parse_args()
 
     loop = asyncio.get_event_loop()
     try:
-        loop.run_until_complete(VirtualJoystickApp().app_func())
+        loop.run_until_complete(VirtualJoystickApp(args.address, args.canbus_port).app_func())
     except asyncio.CancelledError:
         pass
     loop.close()
