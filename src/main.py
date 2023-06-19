@@ -1,4 +1,5 @@
 # Copyright (c) farm-ng, inc. Amiga Development Kit License, Version 0.1
+
 import argparse
 import asyncio
 import os
@@ -6,6 +7,11 @@ from typing import List
 from enum import Enum
 from farm_ng.canbus.canbus_client import CanbusClient
 from farm_ng.service.service_client import ClientConfig
+
+import grpc
+from farm_ng.canbus import canbus_pb2
+from farm_ng.canbus.packet import MotorState
+from farm_ng.service import service_pb2
 
 # Must come before kivy imports
 os.environ["KIVY_NO_ARGS"] = "1"
