@@ -167,7 +167,7 @@ if __name__ == "__main__":
 
     loop = asyncio.get_event_loop()
     try:
-        loop.run_until_complete(VirtualJoystickApp().app_func())
+        loop.run_until_complete(VirtualJoystickApp(args.address, args.canbus_port).app_func())
     except asyncio.CancelledError:
         pass
     loop.close()
