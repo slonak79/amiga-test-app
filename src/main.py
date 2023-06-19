@@ -107,26 +107,18 @@ class VirtualJoystickApp(App):
             # check the state of the service
             state = await client.get_state()
 
-####################
-
             # Wait for a running CAN bus service
-            # if state.value != service_pb2.ServiceState.RUNNING:
-            #     # Cancel existing stream, if it exists
-            #     if response_stream is not None:
-            #         response_stream.cancel()
-            #         response_stream = None
-            #     self.label_message = "Waiting for running canbus service..."
-            #     print("Waiting for running canbus service...")
-            #     await asyncio.sleep(0.1)
-            #     continue
+            if state.value != service_pb2.ServiceState.RUNNING:
+                # Cancel existing stream, if it exists
+                if response_stream is not None:
+                    response_stream.cancel()
+                    response_stream = None
+                self.label_message = "Waiting for running canbus service..."
+                print("Waiting for running canbus service...")
+                await asyncio.sleep(0.1)
+                continue
 
-            # if response_stream is None and self.hidden_button:
-            #     self.label_message = "Start sending CAN messages"
-            #     print("Start sending CAN messages")
-            #     response_stream = client.stub.sendCanbusMessage(self.pose_generator())
-
-##############################
-            if self.hidden_button:
+            if response_stream is None and self.hidden_button:
                 self.label_message = "Start sending CAN messages"
                 print("Start sending CAN messages")
                 response_stream = client.stub.sendCanbusMessage(self.pose_generator())
