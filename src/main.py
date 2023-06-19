@@ -69,22 +69,8 @@ class VirtualJoystickApp(App):
             for task in self.async_tasks:
                 task.cancel()
 
-        # configure the canbus client
-        canbus_config: ClientConfig = ClientConfig(
-            address=self.address, port=self.canbus_port
-        )
-        canbus_client: CanbusClient = CanbusClient(canbus_config)
-
-        # Canbus task(s)
-        self.async_tasks.append(
-            asyncio.ensure_future(self.stream_canbus(canbus_client))
-        )
-
         # Placeholder task
         self.async_tasks.append(asyncio.ensure_future(self.template_function()))
-        self.async_tasks.append(
-            asyncio.ensure_future(self.send_can_msgs(canbus_client))
-        )
 
         return await asyncio.gather(run_wrapper(), *self.async_tasks)
 
