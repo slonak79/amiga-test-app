@@ -44,8 +44,10 @@ class ACTION_BUTTON_TEXT(Enum):
 class VirtualJoystickApp(App):
     """Base class for the main Kivy app."""
 
-    def __init__(self) -> None:
+    def __init__(self, address: str, canbus_port: int) -> None:
         super().__init__()
+        self.address: str = address
+        self.canbus_port: int = canbus_port
         self.hidden_button: bool = False
         self.async_tasks: List[asyncio.Task] = []
         self.max_speed: float = 0.1
