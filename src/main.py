@@ -4,17 +4,8 @@ import asyncio
 import os
 from typing import List
 from enum import Enum
-from typing import Optional
-
-import grpc
-from farm_ng.canbus import canbus_pb2
 from farm_ng.canbus.canbus_client import CanbusClient
-from farm_ng.canbus.packet import AmigaControlState
-from farm_ng.canbus.packet import make_amiga_rpdo1_proto
-from farm_ng.canbus.packet import parse_amiga_tpdo1_proto
 from farm_ng.service.service_client import ClientConfig
-from farm_ng.service import service_pb2
-from farm_ng.canbus.packet import AmigaTpdo1
 
 # Must come before kivy imports
 os.environ["KIVY_NO_ARGS"] = "1"
@@ -48,10 +39,8 @@ class ACTION_BUTTON_TEXT(Enum):
 class VirtualJoystickApp(App):
     """Base class for the main Kivy app."""
 
-    def __init__(self, address: str, canbus_port: int) -> None:
+    def __init__(self) -> None:
         super().__init__()
-        self.address: str = address
-        self.canbus_port: int = canbus_port
         self.hidden_button: bool = False
         self.async_tasks: List[asyncio.Task] = []
         self.max_speed: float = 0.1
@@ -99,62 +88,6 @@ class VirtualJoystickApp(App):
 
         return await asyncio.gather(run_wrapper(), *self.async_tasks)
 
-    async def stream_canbus(self, client: CanbusClient) -> None:
-        """This task:
-
-        - listens to the canbus client's stream
-        - filters for AmigaTpdo1 messages
-        - extracts useful values from AmigaTpdo1 messages
-        """
-        while self.root is None:
-            await asyncio.sleep(0.01)
-
-        response_stream = None
-
-        while True:
-            # check the state of the service
-            state = await client.get_state()
-
-            if state.value not in [
-                service_pb2.ServiceState.IDLE,
-                service_pb2.ServiceState.RUNNING,
-            ]:
-                if response_stream is not None:
-                    response_stream.cancel()
-                    response_stream = None
-
-                print("Canbus service is not streaming or ready to stream")
-                await asyncio.sleep(0.1)
-                continue
-
-            if (
-                response_stream is None
-                and state.value != service_pb2.ServiceState.UNAVAILABLE
-            ):
-                # get the streaming object
-                response_stream = client.stream()
-
-            try:
-                # try/except so app doesn't crash on killed service
-                response: canbus_pb2.StreamCanbusReply = await response_stream.read()
-                assert response and response != grpc.aio.EOF, "End of stream"
-            except Exception as e:
-                print(e)
-                response_stream.cancel()
-                response_stream = None
-                continue
-
-            for proto in response.messages.messages:
-                amiga_tpdo1: Optional[AmigaTpdo1] = parse_amiga_tpdo1_proto(proto)
-                if amiga_tpdo1:
-                    # Store the value for possible other uses
-                    self.amiga_tpdo1 = amiga_tpdo1
-
-                    # Update the Label values as they are received
-                    self.amiga_state = AmigaControlState(amiga_tpdo1.state).name[6:]
-                    self.amiga_speed = str(amiga_tpdo1.meas_speed)
-                    self.amiga_rate = str(amiga_tpdo1.meas_ang_rate)
-
     async def template_function(self) -> None:
         """Placeholder forever loop."""
         while self.root is None:
@@ -166,59 +99,6 @@ class VirtualJoystickApp(App):
             # update the gui
             self.root.ids.disable_button.disabled = self.hidden_button
 
-    async def send_can_msgs(self, client: CanbusClient) -> None:
-        """This task ensures the canbus client sendCanbusMessage method has the pose_generator it will use to send
-        messages on the CAN bus to control the Amiga robot."""
-        while self.root is None:
-            await asyncio.sleep(0.01)
-
-        response_stream = None
-        while True:
-            # check the state of the service
-            state = await client.get_state()
-
-            # Wait for a running CAN bus service
-            if state.value != service_pb2.ServiceState.RUNNING:
-                # Cancel existing stream, if it exists
-                if response_stream is not None:
-                    response_stream.cancel()
-                    response_stream = None
-                print("Waiting for running canbus service...")
-                await asyncio.sleep(0.1)
-                continue
-
-            if response_stream is None and self.hidden_button:
-                print("Start sending CAN messages")
-                # create my own app function to send message.
-                response_stream = client.stub.sendCanbusMessage(self.pose_generator())
-
-            try:
-                async for response in response_stream:
-                    # Sit in this loop and wait until canbus service reports back it is not sending
-                    assert response.success
-            except Exception as e:
-                print(e)
-                response_stream.cancel()
-                response_stream = None
-                continue
-
-            await asyncio.sleep(0.1)
-
-    async def pose_generator(self, period: float = 0.02):
-        """The pose generator yields an AmigaRpdo1 (auto control command) for the canbus client to send on the bus
-        at the specified period (recommended 50hz) based on the onscreen joystick position."""
-        while self.root is None:
-            await asyncio.sleep(0.01)
-
-        while True:
-            msg: canbus_pb2.RawCanbusMessage = make_amiga_rpdo1_proto(
-                state_req=AmigaControlState.STATE_AUTO_ACTIVE,
-                cmd_speed=self.max_speed,
-                cmd_ang_rate=self.max_angular_rate,
-            )
-            yield canbus_pb2.SendCanbusMessageRequest(message=msg)
-            await asyncio.sleep(period)
-
 
 # use wheel speed to test sending message.
 # when feather sees message turn LED to Green on state.
@@ -227,23 +107,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="joystick-tutorial")
 
     # Add additional command line arguments here
-
-    parser.add_argument(
-        "--address", type=str, default="localhost", help="The server address"
-    )
-
-    parser.add_argument(
-        "--canbus-port",
-        type=int,
-        required=True,
-        help="The grpc port where the canbus service is running.",
-    )
-
     args = parser.parse_args()
 
     loop = asyncio.get_event_loop()
     try:
-        loop.run_until_complete(VirtualJoystickApp(args.address, args.canbus_port).app_func())
+        loop.run_until_complete(VirtualJoystickApp().app_func())
     except asyncio.CancelledError:
         pass
     loop.close()
