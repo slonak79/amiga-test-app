@@ -112,7 +112,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--canbus-port",
         type=int,
-        required=True,
+        default=50060,
         help="The grpc port where the canbus service is running.",
     )
     # Add additional command line arguments here
