@@ -53,7 +53,7 @@ class VirtualJoystickApp(App):
         self.canbus_port: int = canbus_port
 
         self.hidden_button: bool = False
-        self.canbus_servie: bool = False
+        self.canbus_servie: bool = True
 
         self.label_message: str = "label here"
         self.async_tasks: List[asyncio.Task] = []
@@ -116,11 +116,11 @@ class VirtualJoystickApp(App):
                     response_stream.cancel()
                     response_stream = None
                 self.label_message = "Waiting for running canbus service..."
-                self.canbus_servie = False
+                self.canbus_servie = True
                 print("Waiting for running canbus service...")
                 await asyncio.sleep(0.1)
                 continue
-            self.canbus_servie = True
+            self.canbus_servie = False
             if response_stream is None:
                 self.label_message = "Start sending CAN messages"
                 print("Start sending CAN messages")
