@@ -1,39 +1,25 @@
-# Copyright (c) farm-ng, inc.
-#
-# Licensed under the Amiga Development Kit License (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     https://github.com/farm-ng/amiga-dev-kit/blob/main/LICENSE
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# Copyright (c) farm-ng, inc. Amiga Development Kit License, Version 0.1
 import argparse
 import asyncio
 import os
 from typing import List
+from enum import Enum
 from typing import Optional
 
 import grpc
 from farm_ng.canbus import canbus_pb2
 from farm_ng.canbus.canbus_client import CanbusClient
 from farm_ng.canbus.packet import AmigaControlState
-from farm_ng.canbus.packet import AmigaTpdo1
 from farm_ng.canbus.packet import make_amiga_rpdo1_proto
 from farm_ng.canbus.packet import parse_amiga_tpdo1_proto
-from farm_ng.oak import oak_pb2
-from farm_ng.oak.camera_client import OakCameraClient
-from farm_ng.service import service_pb2
 from farm_ng.service.service_client import ClientConfig
-from turbojpeg import TurboJPEG
-from virtual_joystick.joystick import VirtualJoystickWidget
+from farm_ng.service import service_pb2
+from farm_ng.canbus.packet import AmigaTpdo1
 
 # Must come before kivy imports
 os.environ["KIVY_NO_ARGS"] = "1"
 
+# gui configs must go before any other kivy import
 from kivy.config import Config  # noreorder # noqa: E402
 
 Config.set("graphics", "resizable", False)
@@ -43,37 +29,33 @@ Config.set("graphics", "fullscreen", "false")
 Config.set("input", "mouse", "mouse,disable_on_activity")
 Config.set("kivy", "keyboard_mode", "systemanddock")
 
+# kivy imports
 from kivy.app import App  # noqa: E402
-from kivy.graphics.texture import Texture  # noqa: E402
 from kivy.lang.builder import Builder  # noqa: E402
-from kivy.properties import StringProperty  # noqa: E402
+
+
+# start/stop button
+class ACTION_BUTTON_STATE(Enum):
+    NORMAL = "normal"
+    DOWN = "down"
+
+
+class ACTION_BUTTON_TEXT(Enum):
+    START = "START"
+    STOP = "STOP"
 
 
 class VirtualJoystickApp(App):
-    # For kivy labels
-    amiga_state = StringProperty("???")
-    amiga_speed = StringProperty("???")
-    amiga_rate = StringProperty("???")
+    """Base class for the main Kivy app."""
 
-    def __init__(
-        self, address: str, camera_port: int, canbus_port: int, stream_every_n: int
-    ) -> None:
+    def __init__(self, address: str, canbus_port: int) -> None:
         super().__init__()
         self.address: str = address
-        self.camera_port: int = camera_port
         self.canbus_port: int = canbus_port
-        self.stream_every_n: int = stream_every_n
-
-        # Received values
-        self.amiga_tpdo1: AmigaTpdo1 = AmigaTpdo1()
-
-        # Parameters
-        self.max_speed: float = 1.0
-        self.max_angular_rate: float = 1.0
-
-        self.image_decoder = TurboJPEG()
-
+        self.hidden_button: bool = False
         self.async_tasks: List[asyncio.Task] = []
+        self.max_speed: float = 0.1
+        self.max_angular_rate: float = 0.1
 
     def build(self):
         return Builder.load_file("res/main.kv")
@@ -81,6 +63,14 @@ class VirtualJoystickApp(App):
     def on_exit_btn(self) -> None:
         """Kills the running kivy application."""
         App.get_running_app().stop()
+
+    def on_action_button(self, action_button):
+        if action_button.state == ACTION_BUTTON_STATE.NORMAL.value:
+            action_button.text = ACTION_BUTTON_TEXT.START.value
+            self.hidden_button = False
+        else:
+            action_button.text = ACTION_BUTTON_TEXT.STOP.value
+            self.hidden_button = True
 
     async def app_func(self):
         async def run_wrapper() -> None:
@@ -90,27 +80,19 @@ class VirtualJoystickApp(App):
             for task in self.async_tasks:
                 task.cancel()
 
-        # configure the camera client
-        camera_config: ClientConfig = ClientConfig(
-            address=self.address, port=self.camera_port
-        )
-        camera_client: OakCameraClient = OakCameraClient(camera_config)
-
         # configure the canbus client
         canbus_config: ClientConfig = ClientConfig(
             address=self.address, port=self.canbus_port
         )
         canbus_client: CanbusClient = CanbusClient(canbus_config)
 
-        # Camera task(s)
-        self.async_tasks.append(
-            asyncio.ensure_future(self.stream_camera(camera_client))
-        )
-
         # Canbus task(s)
         self.async_tasks.append(
             asyncio.ensure_future(self.stream_canbus(canbus_client))
         )
+
+        # Placeholder task
+        self.async_tasks.append(asyncio.ensure_future(self.template_function()))
         self.async_tasks.append(
             asyncio.ensure_future(self.send_can_msgs(canbus_client))
         )
@@ -173,68 +155,16 @@ class VirtualJoystickApp(App):
                     self.amiga_speed = str(amiga_tpdo1.meas_speed)
                     self.amiga_rate = str(amiga_tpdo1.meas_ang_rate)
 
-    async def stream_camera(self, client: OakCameraClient) -> None:
-        """This task listens to the camera client's stream and populates the tabbed panel with all 4 image streams
-        from the oak camera."""
+    async def template_function(self) -> None:
+        """Placeholder forever loop."""
         while self.root is None:
             await asyncio.sleep(0.01)
 
-        response_stream = None
-
         while True:
-            # check the state of the service
-            state = await client.get_state()
+            await asyncio.sleep(0.1)
 
-            if state.value not in [
-                service_pb2.ServiceState.IDLE,
-                service_pb2.ServiceState.RUNNING,
-            ]:
-                # Cancel existing stream, if it exists
-                if response_stream is not None:
-                    response_stream.cancel()
-                    response_stream = None
-                print("Camera service is not streaming or ready to stream")
-                await asyncio.sleep(0.1)
-                continue
-
-            # Create the stream
-            if response_stream is None:
-                response_stream = client.stream_frames(every_n=1)
-
-            try:
-                # try/except so app doesn't crash on killed service
-                response: oak_pb2.StreamFramesReply = await response_stream.read()
-                assert response and response != grpc.aio.EOF, "End of stream"
-            except Exception as e:
-                print(e)
-                response_stream.cancel()
-                response_stream = None
-                continue
-
-            # get the sync frame
-            frame: oak_pb2.OakSyncFrame = response.frame
-
-            # get image and show
-            for view_name in ["rgb", "disparity", "left", "right"]:
-                # Skip if view_name was not included in frame
-                try:
-                    # Decode the image and render it in the correct kivy texture
-                    img = self.image_decoder.decode(
-                        getattr(frame, view_name).image_data
-                    )
-                    texture = Texture.create(
-                        size=(img.shape[1], img.shape[0]), icolorfmt="bgr"
-                    )
-                    texture.flip_vertical()
-                    texture.blit_buffer(
-                        img.tobytes(),
-                        colorfmt="bgr",
-                        bufferfmt="ubyte",
-                        mipmap_generation=False,
-                    )
-                    self.root.ids[view_name].texture = texture
-                except Exception as e:
-                    print(e)
+            # update the gui
+            self.root.ids.disable_button.disabled = self.hidden_button
 
     async def send_can_msgs(self, client: CanbusClient) -> None:
         """This task ensures the canbus client sendCanbusMessage method has the pose_generator it will use to send
@@ -257,8 +187,9 @@ class VirtualJoystickApp(App):
                 await asyncio.sleep(0.1)
                 continue
 
-            if response_stream is None:
+            if response_stream is None and self.hidden_button:
                 print("Start sending CAN messages")
+                # create my own app function to send message.
                 response_stream = client.stub.sendCanbusMessage(self.pose_generator())
 
             try:
@@ -279,50 +210,40 @@ class VirtualJoystickApp(App):
         while self.root is None:
             await asyncio.sleep(0.01)
 
-        joystick: VirtualJoystickWidget = self.root.ids["joystick"]
         while True:
             msg: canbus_pb2.RawCanbusMessage = make_amiga_rpdo1_proto(
                 state_req=AmigaControlState.STATE_AUTO_ACTIVE,
-                cmd_speed=self.max_speed * joystick.joystick_pose.y,
-                cmd_ang_rate=self.max_angular_rate * -joystick.joystick_pose.x,
+                cmd_speed=self.max_speed,
+                cmd_ang_rate=self.max_angular_rate,
             )
             yield canbus_pb2.SendCanbusMessageRequest(message=msg)
             await asyncio.sleep(period)
 
 
+# use wheel speed to test sending message.
+# when feather sees message turn LED to Green on state.
+# when no message turn LED Red to indicate off state.
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(prog="virtual-joystick")
+    parser = argparse.ArgumentParser(prog="joystick-tutorial")
+
+    # Add additional command line arguments here
+
     parser.add_argument(
         "--address", type=str, default="localhost", help="The server address"
     )
-    parser.add_argument(
-        "--camera-port",
-        type=int,
-        required=True,
-        help="The grpc port where the camera service is running.",
-    )
+
     parser.add_argument(
         "--canbus-port",
         type=int,
         required=True,
         help="The grpc port where the canbus service is running.",
     )
-    parser.add_argument(
-        "--stream-every-n",
-        type=int,
-        default=1,
-        help="Streaming frequency (used to skip frames)",
-    )
 
     args = parser.parse_args()
 
     loop = asyncio.get_event_loop()
     try:
-        loop.run_until_complete(
-            VirtualJoystickApp(
-                args.address, args.camera_port, args.canbus_port, args.stream_every_n
-            ).app_func()
-        )
+        loop.run_until_complete(VirtualJoystickApp(args.address, args.canbus_port).app_func())
     except asyncio.CancelledError:
         pass
     loop.close()
