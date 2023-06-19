@@ -53,6 +53,7 @@ class VirtualJoystickApp(App):
         self.canbus_port: int = canbus_port
 
         self.hidden_button: bool = False
+        self.label_message: str = ''
         self.async_tasks: List[asyncio.Task] = []
         self.max_speed: float = 0.1
         self.max_angular_rate: float = 0.1
@@ -117,6 +118,7 @@ class VirtualJoystickApp(App):
                 continue
 
             if response_stream is None and self.hidden_button:
+                self.label_message = "Start sending CAN messages"
                 print("Start sending CAN messages")
                 response_stream = client.stub.sendCanbusMessage(self.pose_generator())
 
@@ -157,6 +159,7 @@ class VirtualJoystickApp(App):
 
             # update the gui
             self.root.ids.disable_button.disabled = self.hidden_button
+            self.root.ids.speed_label.text = self.label_message
 
 
 # use wheel speed to test sending message.

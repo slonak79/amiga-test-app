@@ -11,7 +11,11 @@ RelativeLayout:
             source: "assets/back_button_normal.png" if self.parent.state == "normal" else "assets/back_button_down.png"
             pos: self.parent.pos
             size: self.parent.size
-
+        Label:
+            pos_hint: {"x": 0.5, "top": 1.0}
+            id: speed_label
+            text: "speed"
+            font_size: 40   
     # BoxLayout:
     #     orientation: 'horizontal'
     #     BoxLayout:
