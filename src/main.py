@@ -53,7 +53,7 @@ class VirtualJoystickApp(App):
         self.canbus_port: int = canbus_port
 
         self.hidden_button: bool = False
-        self.label_message: str = ''
+        self.label_message: str = "label here"
         self.async_tasks: List[asyncio.Task] = []
         self.max_speed: float = 0.1
         self.max_angular_rate: float = 0.1
@@ -113,6 +113,7 @@ class VirtualJoystickApp(App):
                 if response_stream is not None:
                     response_stream.cancel()
                     response_stream = None
+                self.label_message = "Waiting for running canbus service..."
                 print("Waiting for running canbus service...")
                 await asyncio.sleep(0.1)
                 continue
