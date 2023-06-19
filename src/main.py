@@ -118,7 +118,7 @@ class VirtualJoystickApp(App):
                 await asyncio.sleep(0.1)
                 continue
 
-            if response_stream is None and self.hidden_button:
+            if response_stream is None:
                 self.label_message = "Start sending CAN messages"
                 print("Start sending CAN messages")
                 response_stream = client.stub.sendCanbusMessage(self.pose_generator())
