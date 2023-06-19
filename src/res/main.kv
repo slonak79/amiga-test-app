@@ -1,5 +1,23 @@
 RelativeLayout:
+    popup:   my_popup
+    id:      main
     orientation: 'horizonatal'
+
+    Popup:
+        id:        my_popup
+        title:     "UV Light Settings"
+        on_parent: if self.parent == main: self.parent.remove_widget(self)
+        BoxLayout:
+            orientation: "vertical"
+
+            Label:
+                text: "Settings Here"
+
+            Button:
+                size_hint:  (1, 0.2)
+                text:       "Save & Exit"
+                on_release: my_popup.dismiss()
+
     Button:
         id: back_btn_layout
         pos_hint: {"x": 0.0, "top": 1.0}
@@ -16,6 +34,7 @@ RelativeLayout:
         id: speed_label
         text: "speed"
         font_size: 40   
+    
     # BoxLayout:
     #     orientation: 'horizontal'
     #     BoxLayout:
@@ -35,7 +54,7 @@ RelativeLayout:
             background_color:0.5,.4,.8,0.5
             text:"settings"
             size_hint_y: .4
-            on_release: app.on_exit_btn()
+            on_release: root.popup.open()
 
         ToggleButton:
             id: action_button
@@ -44,3 +63,5 @@ RelativeLayout:
             size_hint_y: .4
             on_state: app.on_action_button(self)
             group: 'action button'    
+
+
