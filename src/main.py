@@ -82,6 +82,14 @@ class VirtualJoystickApp(App):
         )
         canbus_client: CanbusClient = CanbusClient(canbus_config)
 
+        # Canbus task(s)
+        self.async_tasks.append(
+            asyncio.ensure_future(self.stream_canbus(canbus_client))
+        )
+        self.async_tasks.append(
+            asyncio.ensure_future(self.send_can_msgs(canbus_client))
+        )
+
         # Placeholder task
         self.async_tasks.append(asyncio.ensure_future(self.template_function()))
         self.async_tasks.append(
