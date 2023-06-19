@@ -53,6 +53,8 @@ class VirtualJoystickApp(App):
         self.canbus_port: int = canbus_port
 
         self.hidden_button: bool = False
+        self.canbus_servie: bool = False
+
         self.label_message: str = "label here"
         self.async_tasks: List[asyncio.Task] = []
         self.max_speed: float = 0.1
@@ -114,10 +116,11 @@ class VirtualJoystickApp(App):
                     response_stream.cancel()
                     response_stream = None
                 self.label_message = "Waiting for running canbus service..."
+                self.canbus_servie = False
                 print("Waiting for running canbus service...")
                 await asyncio.sleep(0.1)
                 continue
-
+            self.canbus_servie = True
             if response_stream is None:
                 self.label_message = "Start sending CAN messages"
                 print("Start sending CAN messages")
@@ -161,6 +164,7 @@ class VirtualJoystickApp(App):
             # update the gui
             self.root.ids.disable_button.disabled = self.hidden_button
             self.root.ids.speed_label.text = self.label_message
+            self.root.ids.action_button.disabled = self.canbus_servie
 
 
 # use wheel speed to test sending message.

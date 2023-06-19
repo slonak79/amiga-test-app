@@ -38,6 +38,7 @@ RelativeLayout:
             on_release: app.on_exit_btn()
 
         ToggleButton:
+            id: action_button
             background_color:(0,150,50,.3) if self.state  == "normal" else (255,0,0,.3)
             text: "START"
             size_hint_y: .4
