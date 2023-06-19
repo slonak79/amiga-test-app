@@ -163,6 +163,17 @@ if __name__ == "__main__":
 
     # Add additional command line arguments here
 
+    parser.add_argument(
+        "--address", type=str, default="localhost", help="The server address"
+    )
+
+    parser.add_argument(
+        "--canbus-port",
+        type=int,
+        required=True,
+        help="The grpc port where the canbus service is running.",
+    )
+
     args = parser.parse_args()
 
     loop = asyncio.get_event_loop()
