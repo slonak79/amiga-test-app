@@ -4,13 +4,17 @@ import asyncio
 import os
 from typing import List
 from enum import Enum
+from typing import Optional
 
+import grpc
 from farm_ng.canbus import canbus_pb2
 from farm_ng.canbus.canbus_client import CanbusClient
 from farm_ng.canbus.packet import AmigaControlState
 from farm_ng.canbus.packet import make_amiga_rpdo1_proto
+from farm_ng.canbus.packet import parse_amiga_tpdo1_proto
 from farm_ng.service.service_client import ClientConfig
 from farm_ng.service import service_pb2
+from farm_ng.canbus.packet import AmigaTpdo1
 
 # Must come before kivy imports
 os.environ["KIVY_NO_ARGS"] = "1"
@@ -86,9 +90,6 @@ class VirtualJoystickApp(App):
         self.async_tasks.append(
             asyncio.ensure_future(self.stream_canbus(canbus_client))
         )
-        self.async_tasks.append(
-            asyncio.ensure_future(self.send_can_msgs(canbus_client))
-        )
 
         # Placeholder task
         self.async_tasks.append(asyncio.ensure_future(self.template_function()))
@@ -97,6 +98,62 @@ class VirtualJoystickApp(App):
         )
 
         return await asyncio.gather(run_wrapper(), *self.async_tasks)
+
+    async def stream_canbus(self, client: CanbusClient) -> None:
+        """This task:
+
+        - listens to the canbus client's stream
+        - filters for AmigaTpdo1 messages
+        - extracts useful values from AmigaTpdo1 messages
+        """
+        while self.root is None:
+            await asyncio.sleep(0.01)
+
+        response_stream = None
+
+        while True:
+            # check the state of the service
+            state = await client.get_state()
+
+            if state.value not in [
+                service_pb2.ServiceState.IDLE,
+                service_pb2.ServiceState.RUNNING,
+            ]:
+                if response_stream is not None:
+                    response_stream.cancel()
+                    response_stream = None
+
+                print("Canbus service is not streaming or ready to stream")
+                await asyncio.sleep(0.1)
+                continue
+
+            if (
+                response_stream is None
+                and state.value != service_pb2.ServiceState.UNAVAILABLE
+            ):
+                # get the streaming object
+                response_stream = client.stream()
+
+            try:
+                # try/except so app doesn't crash on killed service
+                response: canbus_pb2.StreamCanbusReply = await response_stream.read()
+                assert response and response != grpc.aio.EOF, "End of stream"
+            except Exception as e:
+                print(e)
+                response_stream.cancel()
+                response_stream = None
+                continue
+
+            for proto in response.messages.messages:
+                amiga_tpdo1: Optional[AmigaTpdo1] = parse_amiga_tpdo1_proto(proto)
+                if amiga_tpdo1:
+                    # Store the value for possible other uses
+                    self.amiga_tpdo1 = amiga_tpdo1
+
+                    # Update the Label values as they are received
+                    self.amiga_state = AmigaControlState(amiga_tpdo1.state).name[6:]
+                    self.amiga_speed = str(amiga_tpdo1.meas_speed)
+                    self.amiga_rate = str(amiga_tpdo1.meas_ang_rate)
 
     async def template_function(self) -> None:
         """Placeholder forever loop."""
