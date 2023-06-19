@@ -12,10 +12,23 @@ RelativeLayout:
             pos: self.parent.pos
             size: self.parent.size
 
+    # BoxLayout:
+    #     orientation: 'horizontal'
+    #     BoxLayout:
+    #         size_hint_x: 0.3
+    #         orientation: 'vertical'
+    #         Widget:
+    #             size_hint_y: 2.0
+    #         Label:
+    #             text: "Amiga State:"
+    #             font_size: 18
+    #             size_hint_y: 0.5    
     BoxLayout:
+        # size_hint_x: 0.5
+        # orientation: 'vertical'
         Button:
             id: disable_button
-            background_color:0,.5,.5,0.2
+            background_color:0.5,.4,.8,0.5
             text:"settings"
             size_hint_y: .4
             on_release: app.on_exit_btn()
@@ -25,5 +38,4 @@ RelativeLayout:
             text: "START"
             size_hint_y: .4
             on_state: app.on_action_button(self)
-            group: 'action button'
-                
+            group: 'action button'    
