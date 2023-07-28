@@ -162,6 +162,7 @@ class VirtualJoystickApp(App):
             # Wait for a running CAN bus service
             # TODO REVERT to !=
             print(state.value)
+            self.label_message = str(state.value)
             if state.value != service_pb2.ServiceState.RUNNING:
                 # Cancel existing stream, if it exists
                 if response_stream is not None:
