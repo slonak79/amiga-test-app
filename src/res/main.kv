@@ -1,7 +1,19 @@
 RelativeLayout:
-    popup:   my_popup
-    id:      main
+    popup: my_popup
+    popup_timer: timer_popup
+    id: main
     orientation: 'horizonatal'
+
+    Popup:
+        id:        timer_popup
+        title:     ""
+        on_parent: if self.parent == main: self.parent.remove_widget(self)
+        on_open: app.start_timer()
+        BoxLayout:
+            orientation: "vertical"
+            Label:
+                id: timer_label
+                font_size: 400 
 
     Popup:
         id:        my_popup
@@ -10,58 +22,168 @@ RelativeLayout:
         BoxLayout:
             orientation: "vertical"
 
-            Label:
-                text: "Settings Here"
+            BoxLayout:
+                orientation: "horizontal"
+                Label:
+                    id: output_label
+                    size_hint: (.2, .3)
+                    pos_hint_x: 0.0
+                    text: "Time to Start (seconds): "
+                    font_size:28
+                GridLayout:
+                    size_hint: (.5, .3)
+                    orientation: "tb-lr"
+                    cols:3
+                    rows: 2
+                    Label:
+                        text: "5"
+                        font_size:20
+                    CheckBox:
+                        group: "time_to_start_value"
+                        on_active: app.on_checkbox(self.active, 5)
+
+                    Label:
+                        text: "10"
+                        font_size:20
+                    CheckBox:
+                        group: "time_to_start_value"
+                        on_active: app.on_checkbox(self.active, 10)
+
+                    Label:
+                        text: "15"
+                        font_size:20
+                    CheckBox:
+                        group: "time_to_start_value"
+                        on_active: app.on_checkbox(self.active, 15)
+
+            BoxLayout:
+                height: "40dp"
+                size_hint_y: None
+
+                Label:
+                    text: "Rate"
+                    size_hint_x: 25
+
+                TextInput:
+                    id: time_to_start   # TextInput object name
+                    size_hint_x: 50
+                    hint_text: "ft/min"
+                    multiline: False
+                    input_filter: "float"
+
+                Label:
+                    text: "ft/min"
+                    size_hint_x: 25
+                    text_size: self.size
+                    halign: "left"
+
 
             Button:
                 size_hint:  (1, 0.2)
                 text:       "Save & Exit"
                 on_release: my_popup.dismiss()
 
-    Button:
-        id: back_btn_layout
-        pos_hint: {"x": 0.0, "top": 1.0}
-        background_color: 0, 0, 0, 0
-        size_hint: 0.1, 0.1
-        background_normal: "assets/back_button.png"
-        on_release: app.on_exit_btn()
-        Image:
-            source: "assets/back_button_normal.png" if self.parent.state == "normal" else "assets/back_button_down.png"
-            pos: self.parent.pos
-            size: self.parent.size
-    Label:
-        # pos_hint: {"x": 0.5, "top": 5.0}
-        id: speed_label
-        text: "speed"
-        font_size: 40   
-    
-    # BoxLayout:
-    #     orientation: 'horizontal'
-    #     BoxLayout:
-    #         size_hint_x: 0.3
-    #         orientation: 'vertical'
-    #         Widget:
-    #             size_hint_y: 2.0
-    #         Label:
-    #             text: "Amiga State:"
-    #             font_size: 18
-    #             size_hint_y: 0.5    
+
     BoxLayout:
-        # size_hint_x: 0.5
-        # orientation: 'vertical'
+        size_hint_y: 0.1
+        pos_hint: {"x": 0.0, "top": 1.0}
+
         Button:
-            id: disable_button
-            background_color:0.5,.4,.8,0.5
-            text:"settings"
-            size_hint_y: .4
-            on_release: root.popup.open()
+            id: back_btn_layout
+
+            background_color: 0, 0, 0, 0
+            size_hint: .35, 1
+            background_normal: "assets/back_button.png"
+            on_release: app.on_exit_btn()
+            Image:
+                source: "assets/back_button_normal.png" if self.parent.state == "normal" else "assets/back_button_down.png"
+                pos: self.parent.pos
+                size: self.parent.size
+
+        Label:
+            id: time_to_start_label
+            text: time_to_start.text
+            font_size: 20
+        Label:
+            id: canbus_state_label
+            text: ""
+            font_size: 20   
+        Label:
+            id: timer_label_v
+            font_size: 20 
+
+    BoxLayout:
+        orientation: "vertical"
+        pos_hint: {"x": 0.0, "top": 1.0}
+        size_hint_y: 0.7
+        BoxLayout:
+            orientation: "horizontal"
+            Label:
+                background_color: 0, 1, 0, 1
+                id: output_label
+                size_hint: (.2, .3)
+                pos_hint_x: 0.0
+                text: "Time to Start (seconds): "
+                font_size:28
+            GridLayout:
+                size_hint: (.5, .3)
+                orientation: "tb-lr"
+                cols:3
+                rows: 2
+                Label:
+                    text: "5"
+                    font_size:20
+                CheckBox:
+                    group: "time_to_start_value"
+                    on_active: app.on_checkbox(self.active, 5)
+
+                Label:
+                    text: "10"
+                    font_size:20
+                CheckBox:
+                    group: "time_to_start_value"
+                    on_active: app.on_checkbox(self.active, 10)
+
+                Label:
+                    text: "15"
+                    font_size:20
+                CheckBox:
+                    group: "time_to_start_value"
+                    on_active: app.on_checkbox(self.active, 15)
+
+        BoxLayout:
+            Label:
+                text: "Rate of Speed"
+                font_size: "20sp"
+            Slider:
+                id: slider
+                min: 1
+                max: 15
+                step: 1
+                orientation: 'horizontal'
+                on_value: app.on_speed_slider(*args)
+
+            Label:
+                text: str(slider.value) + " ft/min"
+
+
+    BoxLayout:
+        size_hint_y: 0.2
+
+        # Button:
+        #     id: settings_button
+        #     disabled: action_button.state == "down"
+        #     background_color:0.5,.4,.8,0.5
+        #     text:"settings"
+        #     size_hint_y: .4
+        #     on_release: root.popup.open()
 
         ToggleButton:
             id: action_button
-            background_color:(0,150,50,.3) if self.state  == "normal" else (255,0,0,.3)
             text: "START"
-            size_hint_y: .4
+            font_size: "64sp"
+            background_color:"#64b5f6" if self.state  == "normal" else (255,0,0,1)
+            # size_hint_y: .2
             on_state: app.on_action_button(self)
-            group: 'action button'    
-
-
+            group: 'action button'
+            
