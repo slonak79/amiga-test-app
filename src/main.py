@@ -160,6 +160,8 @@ class VirtualJoystickApp(App):
             state = await client.get_state()
 
             # Wait for a running CAN bus service
+            # TODO REVERT to !=
+            print(state.value)
             if state.value != service_pb2.ServiceState.RUNNING:
                 # Cancel existing stream, if it exists
                 if response_stream is not None:
@@ -200,18 +202,18 @@ class VirtualJoystickApp(App):
             await asyncio.sleep(0.01)
 
         while True:
-            msg: canbus_pb2.RawCanbusMessage = make_amiga_rpdo1_proto(
-                state_req=AmigaControlState.STATE_AUTO_ACTIVE,
-                cmd_speed=self.max_speed,
-                cmd_ang_rate=self.max_angular_rate,
-            )
+            # msg: canbus_pb2.RawCanbusMessage = make_amiga_rpdo1_proto(
+            #     state_req=AmigaControlState.STATE_AUTO_ACTIVE,
+            #     cmd_speed=self.max_speed,
+            #     cmd_ang_rate=self.max_angular_rate,
+            # )
             light_msg: canbus_pb2.RawCanbusMessage = make_amiga_light_msg(
                 state_req=AmigaControlState.STATE_AUTO_ACTIVE,
                 light_state=AmigalightState.STATE_ON,
             )
 
             # Message to wheels
-            yield canbus_pb2.SendCanbusMessageRequest(message=msg)
+            # yield canbus_pb2.SendCanbusMessageRequest(message=msg)
             # Message to light micro-controller
             yield canbus_pb2.SendCanbusMessageRequest(message=light_msg)
 
