@@ -249,7 +249,6 @@ if __name__ == "__main__":
         "--canbus-port",
         type=int,
         default=50060,
-        required=True,
         help="The grpc port where the canbus service is running.",
     )
     # Add additional command line arguments here
