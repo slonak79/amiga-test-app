@@ -77,7 +77,7 @@ class VirtualJoystickApp(App):
 
         self.label_message: str = "label here"
         self.async_tasks: List[asyncio.Task] = []
-        self.max_speed: float = 0.10
+        self.max_speed: float = -0.10
         self.max_angular_rate: float = 0
         self.set_speed: float = 0.10
 
@@ -247,7 +247,7 @@ class VirtualJoystickApp(App):
                 self.canbus_servie = False
                 self.label_message = "Canbus service ready."
 
-            if response_stream is None:
+            if response_stream is None and self.action_button:
                 self.label_message = "Start sending CAN messages"
                 print("Start sending CAN messages")
                 response_stream = client.stub.sendCanbusMessage(self.pose_generator())
