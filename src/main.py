@@ -163,7 +163,10 @@ class VirtualJoystickApp(App):
             # TODO REVERT to !=
             print(state.value)
             self.label_message = str(state.value)
-            if state.value != service_pb2.ServiceState.RUNNING:
+            if state.value not in [
+                service_pb2.ServiceState.RUNNING,
+                service_pb2.ServiceState.IDLE,
+            ]:
                 # Cancel existing stream, if it exists
                 if response_stream is not None:
                     response_stream.cancel()
