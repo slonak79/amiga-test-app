@@ -280,10 +280,10 @@ class VirtualJoystickApp(App):
                 cmd_speed=self.max_speed,
                 cmd_ang_rate=self.max_angular_rate,
             )
-            # light_msg: canbus_pb2.RawCanbusMessage = make_amiga_light_msg(
-            #     state_req=AmigaControlState.STATE_AUTO_ACTIVE,
-            #     light_state=AmigalightState.STATE_ON,
-            # )
+            light_msg: canbus_pb2.RawCanbusMessage = make_amiga_light_msg(
+                state_req=AmigaControlState.STATE_AUTO_ACTIVE,
+                light_state=AmigalightState.STATE_ON,
+            )
 
             # send message
             self.label_message = f"Sending Wheel speed: {self.max_speed}"
@@ -291,7 +291,7 @@ class VirtualJoystickApp(App):
             # Message to wheels
             yield canbus_pb2.SendCanbusMessageRequest(message=msg)
             # Message to light micro-controller
-            # yield canbus_pb2.SendCanbusMessageRequest(message=light_msg)
+            yield canbus_pb2.SendCanbusMessageRequest(message=light_msg)
 
             await asyncio.sleep(period)
 
