@@ -179,7 +179,7 @@ class VirtualJoystickApp(App):
                 self.canbus_servie = False
                 self.label_message = "Canbus service ready."
 
-            if response_stream is None and self.action_button:
+            if response_stream is None:
                 self.label_message = "Start sending CAN messages"
                 print("Start sending CAN messages")
                 response_stream = client.stub.sendCanbusMessage(self.pose_generator())
