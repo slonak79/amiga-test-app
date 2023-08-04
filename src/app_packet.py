@@ -37,7 +37,7 @@ class AmigaLight(Packet):
         )
 
     def decode(self, data):
-        (self.state_req, ligt_state) = unpack(self.format, data)
+        (self.state_req, self.ligt_state) = unpack(self.format, data)
         self.ligt_state = self.ligt_state
 
     def __str__(self):
