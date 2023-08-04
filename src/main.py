@@ -77,7 +77,7 @@ class VirtualJoystickApp(App):
 
         self.label_message: str = "label here"
         self.async_tasks: List[asyncio.Task] = []
-        self.max_speed: float = -0.10
+        self.max_speed: float = 0.0
         self.max_angular_rate: float = 0
         self.set_speed: float = 0.10
 
@@ -102,6 +102,7 @@ class VirtualJoystickApp(App):
 
     def stop_timer(self, dt):
         Clock.unschedule(self.timer_callback)
+        self.max_speed = -0.1
         self.root.ids.timer_popup.dismiss()
 
     def clear_timer_values(self, dt):
@@ -115,6 +116,7 @@ class VirtualJoystickApp(App):
                 action_button.text = ACTION_BUTTON_TEXT.START.value
                 # self.stop_timer()
                 self.action_button = False
+                self.max_speed = 0.0
             else:
                 action_button.text = ACTION_BUTTON_TEXT.STOP.value
                 # self.start_timer()
@@ -247,7 +249,7 @@ class VirtualJoystickApp(App):
                 self.canbus_servie = False
                 self.label_message = "Canbus service ready."
 
-            if response_stream is None and self.action_button:
+            if response_stream is None:
                 self.label_message = "Start sending CAN messages"
                 print("Start sending CAN messages")
                 response_stream = client.stub.sendCanbusMessage(self.pose_generator())
