@@ -63,7 +63,7 @@ def make_amiga_light_msg(
     """
     return canbus_pb2.RawCanbusMessage(
         id=AmigaLight.cob_id + DASHBOARD_NODE_ID,
-        data=AmigaLight(state_req=state_req, light_state=light_state).encode(),
+        data=AmigaLight(state_req=state_req, ligt_state=light_state).encode(),
     )
 
 
