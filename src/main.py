@@ -155,7 +155,7 @@ class VirtualJoystickApp(App):
             await asyncio.sleep(0.01)
 
         response_stream = None
-        while True:
+        while self.action_button:
             # check the state of the service
             state = await client.get_state()
 
