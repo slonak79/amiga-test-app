@@ -305,7 +305,9 @@ class VirtualJoystickApp(App):
 
             # update the gui
 
-            self.root.ids.canbus_state_label.text = self.label_message
+            self.root.ids.canbus_state_label.text = (
+                self.label_message + " " + self.max_speed
+            )
             self.root.ids.time_to_start_label.text = self.time_to_start_label
             self.root.ids.timer_label.text = self.timer_text
             self.root.ids.timer_label_v.text = self.timer_text
