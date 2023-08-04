@@ -155,7 +155,7 @@ class VirtualJoystickApp(App):
             await asyncio.sleep(0.01)
 
         response_stream = None
-        while self.action_button:
+        while True:
             # check the state of the service
             state = await client.get_state()
 
@@ -179,7 +179,7 @@ class VirtualJoystickApp(App):
                 self.canbus_servie = False
                 self.label_message = "Canbus service ready."
 
-            if response_stream is None:
+            if response_stream is None and self.action_button:
                 self.label_message = "Start sending CAN messages"
                 print("Start sending CAN messages")
                 response_stream = client.stub.sendCanbusMessage(self.pose_generator())
