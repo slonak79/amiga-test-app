@@ -70,7 +70,7 @@ class VirtualJoystickApp(App):
 
         self.label_message: str = "label here"
         self.async_tasks: List[asyncio.Task] = []
-        self.max_speed: float = 0.1
+        self.max_speed: float = 1.0
         self.max_angular_rate: float = 0
         self.set_speed: float = 1.0
 
@@ -161,8 +161,7 @@ class VirtualJoystickApp(App):
 
             # Wait for a running CAN bus service
             # TODO REVERT to !=
-            print(state.value)
-            self.label_message = str(state.value)
+
             if state.value not in [
                 service_pb2.ServiceState.RUNNING,
                 service_pb2.ServiceState.IDLE,
