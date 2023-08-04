@@ -17,7 +17,7 @@ class AmigalightState(IntEnum):
 class AmigaLight(Packet):
     cob_id = 0x180
 
-    def __int__(
+    def __init__(
         self,
         state_req: AmigaControlState = AmigaControlState.STATE_ESTOPPED,
         ligt_state: int = AmigalightState.STATE_OFF,
