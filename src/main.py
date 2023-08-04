@@ -286,7 +286,7 @@ class VirtualJoystickApp(App):
             # )
 
             # send message
-            self.label_message = "Sending CAN messages"
+            self.label_message = f"Sending Wheel speed: {self.max_speed}"
 
             # Message to wheels
             yield canbus_pb2.SendCanbusMessageRequest(message=msg)
@@ -305,9 +305,7 @@ class VirtualJoystickApp(App):
 
             # update the gui
 
-            self.root.ids.canbus_state_label.text = (
-                self.label_message + " " + self.max_speed
-            )
+            self.root.ids.canbus_state_label.text = self.label_message
             self.root.ids.time_to_start_label.text = self.time_to_start_label
             self.root.ids.timer_label.text = self.timer_text
             self.root.ids.timer_label_v.text = self.timer_text
