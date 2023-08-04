@@ -125,9 +125,6 @@ class VirtualJoystickApp(App):
     def on_speed_slider(self, *speed_slider):
         self.set_speed = float(speed_slider[1])
 
-    def __aiter__(self):
-        return self.__wrapped__.__aiter__()
-
     async def app_func(self):
         async def run_wrapper() -> None:
             # we don't actually need to set asyncio as the lib because it is
@@ -183,7 +180,7 @@ class VirtualJoystickApp(App):
                 self.canbus_servie = False
                 self.label_message = "Canbus service ready."
 
-            if response_stream is None and self.action_button:
+            if response_stream is None:
                 self.label_message = "Start sending CAN messages"
                 print("Start sending CAN messages")
                 response_stream = client.stub.sendCanbusMessage(self.pose_generator())
