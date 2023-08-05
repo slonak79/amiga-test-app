@@ -289,8 +289,9 @@ class VirtualJoystickApp(App):
             self.label_message = f"Sending Wheel speed: {self.max_speed}"
 
             # Message to wheels
-            yield canbus_pb2.SendCanbusMessageRequest(message=msg)
+            # yield canbus_pb2.SendCanbusMessageRequest(message=msg)
             # Message to light micro-controller
+            print(light_msg)
             yield canbus_pb2.SendCanbusMessageRequest(message=light_msg)
 
             await asyncio.sleep(period)
